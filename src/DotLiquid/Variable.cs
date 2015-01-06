@@ -8,7 +8,10 @@ using DotLiquid.Util;
 
 namespace DotLiquid
 {
-	/// <summary>
+    using System;
+    using System.Reflection;
+
+    /// <summary>
 	/// Holds variables. Variables are only loaded "just in time"
 	/// and are not evaluated as part of the render stage
 	///
@@ -22,6 +25,7 @@ namespace DotLiquid
 	public class Variable : IRenderable
 	{
 		public static readonly string FilterParser = string.Format(R.Q(@"(?:{0}|(?:\s*(?!(?:{0}))(?:{1}|\S+)\s*)+)"), Liquid.FilterSeparator, Liquid.QuotedFragment);
+        private static string QuotedFragment = string.Format(R.Q(@"{0}|(?:[^,\|'""]|{0})+"), Liquid.QuotedString);
 
 		public List<Filter> Filters { get; set; }
 		public string Name { get; set; }
@@ -48,7 +52,8 @@ namespace DotLiquid
 						if (filterNameMatch.Success)
 						{
 							string filterName = filterNameMatch.Groups[1].Value;
-							List<string> filterArgs = R.Scan(f, string.Format(R.Q(@"(?:{0}|{1})\s*({2})"), Liquid.FilterArgumentSeparator, Liquid.ArgumentSeparator, Liquid.QuotedFragment));
+
+                            List<string> filterArgs = R.Scan(f, string.Format(R.Q(@"(?:{0}|{1})\s*({2})"), Liquid.FilterArgumentSeparator, Liquid.ArgumentSeparator, Liquid.QuotedFragment));
 							Filters.Add(new Filter(filterName, filterArgs.ToArray()));
 						}
 					}
@@ -90,20 +95,58 @@ namespace DotLiquid
 			if (Name == null)
 				return null;
 
-			object output = context[Name];
+			var output = context[Name];
 
 			Filters.ToList().ForEach(filter =>
 			{
-				List<object> filterArgs = filter.Arguments.Select(a => context[a]).ToList();
-				try
-				{
-					filterArgs.Insert(0, output);
-					output = context.Invoke(filter.Name, filterArgs);
-				}
-				catch (FilterNotFoundException ex)
-				{
-					throw new FilterNotFoundException(string.Format(Liquid.ResourceManager.GetString("VariableFilterNotFoundException"), filter.Name, _markup.Trim()), ex);
-				}
+			    if (filter.Arguments.Any(a => a.Contains(":") && !a.StartsWith("'")))
+			    {
+			        if (!filter.Arguments.All(a => a.Contains(":") && !a.StartsWith("'"))) // generate exception, all elements need to be named
+			        {
+			            throw new InvalidFilterCriteriaException(
+			                "Arguments need to be all named or all unnamed. Example: count: i or simply i");
+			        }
+
+			        var filterArgs = new List<Tuple<string, object>>();
+                    filterArgs.Add(new Tuple<string, object>("input", output));
+                    var list = filter.Arguments.Select(a => ResolveArgumentContextVariables(context, a)).ToList();
+			        foreach (var tuple in list)
+			        {
+			            filterArgs.Add(new Tuple<string, object>(tuple.Item1, tuple.Item2));
+			        }
+
+			        try
+			        {
+			            output = context.Invoke(filter.Name, filterArgs);
+			        }
+			        catch (FilterNotFoundException ex)
+			        {
+			            throw new FilterNotFoundException(
+			                string.Format(
+			                    Liquid.ResourceManager.GetString("VariableFilterNotFoundException"),
+			                    filter.Name,
+			                    _markup.Trim()),
+			                ex);
+			        }
+			    }
+			    else
+			    {
+			        var filterArgs = filter.Arguments.Select(a => context[a]).ToList();
+			        try
+			        {
+			            filterArgs.Insert(0, output);
+			            output = context.Invoke(filter.Name, filterArgs);
+			        }
+			        catch (FilterNotFoundException ex)
+			        {
+			            throw new FilterNotFoundException(
+			                string.Format(
+			                    Liquid.ResourceManager.GetString("VariableFilterNotFoundException"),
+			                    filter.Name,
+			                    _markup.Trim()),
+			                ex);
+			        }
+			    }
 			});
 
             if (output is IValueTypeConvertible)
@@ -112,7 +155,22 @@ namespace DotLiquid
 			return output;
 		}
 
-		/// <summary>
+        /// <summary>
+        /// Resolved context inside argument, can work with named keyword contexts, aka "count: i" where i is avariable and will return
+        /// "count: 1" if variable is set to "1".
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="argument"></param>
+        /// <returns></returns>
+        private Tuple<string, object> ResolveArgumentContextVariables(Context context, string argument)
+        {
+            var left = argument.Substring(0, argument.IndexOf(":", System.StringComparison.Ordinal));
+            var right = argument.Substring(argument.IndexOf(":", System.StringComparison.Ordinal)+1);
+
+            return new Tuple<string, object>(left, context[right.Trim()]);
+        }
+
+        /// <summary>
 		/// Primarily intended for testing.
 		/// </summary>
 		/// <param name="context"></param>

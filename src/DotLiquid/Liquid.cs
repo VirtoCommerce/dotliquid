@@ -23,7 +23,7 @@ namespace DotLiquid
 		public static readonly string VariableEnd = R.Q(@"\}\}");
 		public static readonly string VariableIncompleteEnd = R.Q(@"\}\}?");
 		public static readonly string QuotedString = R.Q(@"""[^""]*""|'[^']*'");
-		public static readonly string QuotedFragment = string.Format(R.Q(@"{0}|(?:[^,\|'""]|{0})+"), QuotedString);
+		public static readonly string QuotedFragment = string.Format(R.Q(@"{0}|(?:[^\s,\|'""]|{0})+"), QuotedString);
 		public static readonly string QuotedAssignFragment = string.Format(R.Q(@"{0}|(?:[^\s\|'""]|{0})+"), QuotedString);
 		public static readonly string StrictQuotedFragment = R.Q(@"""[^""]+""|'[^']+'|[^\s\|\:\,]+");
 		public static readonly string FirstFilterArgument = string.Format(R.Q(@"{0}(?:{1})"), FilterArgumentSeparator, StrictQuotedFragment);

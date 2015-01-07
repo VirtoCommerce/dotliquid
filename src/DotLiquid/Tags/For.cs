@@ -58,9 +58,11 @@ namespace DotLiquid.Tags
 		private string _variableName, _collectionName, _name;
 		private bool _reversed;
 		private Dictionary<string, string> _attributes;
+        private List<Condition> _blocks;
 
 		public override void Initialize(string tagName, string markup, List<string> tokens)
 		{
+            _blocks = new List<Condition>();
 			Match match = Syntax.Match(markup);
 			if (match.Success)
 			{
@@ -80,16 +82,33 @@ namespace DotLiquid.Tags
 			base.Initialize(tagName, markup, tokens);
 		}
 
+        public override void UnknownTag(string tag, string markup, List<string> tokens)
+        {
+            NodeList = new List<object>();
+            switch (tag)
+            {
+                case "else":
+                    RecordElseCondition(markup);
+                    break;
+                default:
+                    base.UnknownTag(tag, markup, tokens);
+                    break;
+            }
+        }
+
 		public override void Render(Context context, TextWriter result)
 		{
 			context.Registers["for"] = context.Registers["for"] ?? new Hash(0);
 
 			object collection = context[_collectionName];
 
-			if (!(collection is IEnumerable))
-				return;
+		    if (!(collection is IEnumerable))
+		    {
+                RenderElse(context, result);
+		        return;
+		    }
 
-			int from = (_attributes.ContainsKey("offset"))
+		    int from = (_attributes.ContainsKey("offset"))
 				? (_attributes["offset"] == "continue")
 					? Convert.ToInt32(context.Registers.Get<Hash>("for")[_name])
 					: Convert.ToInt32(context[_attributes["offset"]])
@@ -100,10 +119,13 @@ namespace DotLiquid.Tags
 
 			List<object> segment = SliceCollectionUsingEach((IEnumerable) collection, from, to);
 
-			if (!segment.Any())
-				return;
+		    if (!segment.Any())
+		    {
+                RenderElse(context, result);
+		        return;
+		    }
 
-			if (_reversed)
+		    if (_reversed)
 				segment.Reverse();
 
 			int length = segment.Count;
@@ -129,7 +151,22 @@ namespace DotLiquid.Tags
 			}));
 		}
 
-		private static List<object> SliceCollectionUsingEach(IEnumerable collection, int from, int? to)
+	    private void RenderElse(Context context, TextWriter result)
+	    {
+            context.Stack(() =>
+            {
+                _blocks.ForEach(block =>
+                {
+                    if (block.IsElse)
+                    {
+                            RenderAll(block.Attachment, context, result);
+                            return;
+                    }
+                });
+            });
+	    }
+
+	    private static List<object> SliceCollectionUsingEach(IEnumerable collection, int from, int? to)
 		{
 			List<object> segments = new List<object>();
 			int index = 0;
@@ -145,5 +182,15 @@ namespace DotLiquid.Tags
 			}
 			return segments;
 		}
+
+        private void RecordElseCondition(string markup)
+        {
+            if (markup.Trim() != string.Empty)
+                throw new SyntaxException(Liquid.ResourceManager.GetString("CaseTagElseSyntaxException"));
+
+            ElseCondition block = new ElseCondition();
+            block.Attach(NodeList);
+            _blocks.Add(block);
+        }
 	}
 }

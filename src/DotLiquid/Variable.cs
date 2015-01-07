@@ -25,7 +25,7 @@ namespace DotLiquid
 	public class Variable : IRenderable
 	{
 		public static readonly string FilterParser = string.Format(R.Q(@"(?:{0}|(?:\s*(?!(?:{0}))(?:{1}|\S+)\s*)+)"), Liquid.FilterSeparator, Liquid.QuotedFragment);
-        private static string QuotedFragment = string.Format(R.Q(@"{0}|(?:[^,\|'""]|{0})+"), Liquid.QuotedString);
+        private static string QuotedFragment = string.Format(R.Q(@"{0}|(?:[^:][^\s,\|'""]|{0})+"), Liquid.QuotedString);
 
 		public List<Filter> Filters { get; set; }
 		public string Name { get; set; }
@@ -53,7 +53,7 @@ namespace DotLiquid
 						{
 							string filterName = filterNameMatch.Groups[1].Value;
 
-                            List<string> filterArgs = R.Scan(f, string.Format(R.Q(@"(?:{0}|{1})\s*({2})"), Liquid.FilterArgumentSeparator, Liquid.ArgumentSeparator, Liquid.QuotedFragment));
+                            List<string> filterArgs = R.Scan(f, string.Format(R.Q(@"(?:{0}|{1})\s*({2})"), Liquid.FilterArgumentSeparator, Liquid.ArgumentSeparator, QuotedFragment));
 							Filters.Add(new Filter(filterName, filterArgs.ToArray()));
 						}
 					}

@@ -28,13 +28,18 @@ namespace DotLiquid.Util
 		{
 			ParameterExpression lhs = Expression.Parameter(leftType, "lhs");
 			ParameterExpression rhs = Expression.Parameter(rightType, "rhs");
+
+		    Expression lhsExpression = lhs;
+            Expression rhsExpression = rhs;
+             UpdateVisit(ref lhsExpression, ref rhsExpression);
 			try
 			{
 				try
 				{
-					return Expression.Lambda(body(lhs, rhs), lhs, rhs).Compile();
+                 
+					return Expression.Lambda(body(lhsExpression, rhsExpression), lhs, rhs).Compile();
 				}
-				catch (InvalidOperationException)
+				catch (InvalidOperationException ex)
 				{
 					if (castArgsToResultOnFailure && !( // if we show retry                                                        
 						leftType == resultType && // and the args aren't
@@ -56,5 +61,19 @@ namespace DotLiquid.Util
 				return (Action)(delegate { throw new InvalidOperationException(msg); });
 			}
 		}
+
+        private static void UpdateVisit(ref Expression left, ref Expression right)
+        {
+            var leftTypeCode = Type.GetTypeCode(left.Type);
+            var rightTypeCode = Type.GetTypeCode(right.Type);
+
+            if (leftTypeCode == rightTypeCode)
+                return;
+
+            if (leftTypeCode > rightTypeCode)
+                right = Expression.Convert(right, left.Type);
+            else
+                left = Expression.Convert(left, right.Type);
+        }
 	}
 }

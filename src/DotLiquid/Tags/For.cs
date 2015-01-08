@@ -79,6 +79,7 @@ namespace DotLiquid.Tags
 				throw new SyntaxException(Liquid.ResourceManager.GetString("ForTagSyntaxException"));
 			}
 
+            RecordForCondition(markup, _collectionName, _name, _attributes);
 			base.Initialize(tagName, markup, tokens);
 		}
 
@@ -95,8 +96,31 @@ namespace DotLiquid.Tags
                     break;
             }
         }
+        public override void Render(Context context, TextWriter result)
+        {
+            context.Stack(() =>
+            {
+                bool executeElseBlock = true;
+                _blocks.ForEach(block =>
+                {
+                    if (block.IsElse)
+                    {
+                        if (executeElseBlock)
+                        {
+                            RenderAll(block.Attachment, context, result);
+                            return;
+                        }
+                    }
+                    else if (block.Evaluate(context))
+                    {
+                        executeElseBlock = false;
+                        Render(block, context, result);
+                    }
+                });
+            });
+        }
 
-		public override void Render(Context context, TextWriter result)
+		public void Render(Condition condition, Context context, TextWriter result)
 		{
 			context.Registers["for"] = context.Registers["for"] ?? new Hash(0);
 
@@ -147,7 +171,7 @@ namespace DotLiquid.Tags
 					first = (index == 0),
 					last = (index == length - 1)
 				});
-				RenderAll(NodeList, context, result);
+				RenderAll(condition.Attachment, context, result);
 			}));
 		}
 
@@ -168,7 +192,7 @@ namespace DotLiquid.Tags
 
 	    private static List<object> SliceCollectionUsingEach(IEnumerable collection, int from, int? to)
 		{
-			List<object> segments = new List<object>();
+			var segments = new List<object>();
 			int index = 0;
 			foreach (object item in collection)
 			{
@@ -183,12 +207,20 @@ namespace DotLiquid.Tags
 			return segments;
 		}
 
+        private void RecordForCondition(string markup, string collectionName, string variableName, Dictionary<string, string> attributes)
+        {
+            var block = new ForCondition { CollectionName = collectionName, Attributes = attributes, ContinueVariableName = variableName};
+            //block.Attach(NodeList);
+            _blocks.Add(block);
+            NodeList = block.Attach(new List<object>());
+        }
+
         private void RecordElseCondition(string markup)
         {
             if (markup.Trim() != string.Empty)
                 throw new SyntaxException(Liquid.ResourceManager.GetString("CaseTagElseSyntaxException"));
 
-            ElseCondition block = new ElseCondition();
+            var block = new ElseCondition();
             block.Attach(NodeList);
             _blocks.Add(block);
         }

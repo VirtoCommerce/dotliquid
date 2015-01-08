@@ -26,7 +26,7 @@ namespace DotLiquid.Util
 		{
 			return Regex.Matches(input, pattern)
 				.Cast<Match>()
-				.Select(m => (m.Groups.Count == 2) ? m.Groups[1].Value.Trim() : m.Value.Trim())
+                .Select(m => (m.Groups.Count == 2) ? m.Groups[1].Value.TrimStart(new[] { ':' }).Trim() : m.Value.TrimStart(new[] { ':' }).Trim())
 				.ToList();
 		}
 

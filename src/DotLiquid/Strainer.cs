@@ -90,6 +90,28 @@ namespace DotLiquid
 			if (parameterInfos.Length > 0 && parameterInfos[0].ParameterType == typeof(Context))
 				args.Insert(0, _context);
 
+            bool hasParams = false;
+            if (parameterInfos.Length > 0)
+                hasParams = parameterInfos[parameterInfos.Length - 1].GetCustomAttributes(typeof(ParamArrayAttribute), false).Length > 0;
+
+            if (hasParams)
+            {
+                int lastParamPosition = parameterInfos.Length - 1;
+
+                object[] realParams = new object[parameterInfos.Length];
+                for (int i = 0; i < lastParamPosition; i++)
+                    realParams[i] = args[i];
+
+                Type paramsType = parameterInfos[lastParamPosition].ParameterType.GetElementType();
+                Array extra = Array.CreateInstance(paramsType, args.Count - lastParamPosition);
+                for (int i = 0; i < extra.Length; i++)
+                    extra.SetValue(args[i + lastParamPosition], i);
+
+                realParams[lastParamPosition] = extra;
+
+                args = new List<object>(realParams);
+            }
+
 			// Add in any default parameters - .NET won't do this for us.
 			if (parameterInfos.Length > args.Count)
 				for (int i = args.Count; i < parameterInfos.Length; ++i)

@@ -25,7 +25,7 @@ namespace DotLiquid
 	public class Variable : IRenderable
 	{
 		public static readonly string FilterParser = string.Format(R.Q(@"(?:{0}|(?:\s*(?!(?:{0}))(?:{1}|\S+)\s*)+)"), Liquid.FilterSeparator, Liquid.QuotedFragment);
-        private static string QuotedFragment = string.Format(R.Q(@"{0}|(?:[^:][^\s,\|'""]|{0})+"), Liquid.QuotedString);
+        private static string QuotedFragment = string.Format(R.Q(@"{0}|(?:[^,\|'""]|{0})+"), Liquid.QuotedString);
 
 		public List<Filter> Filters { get; set; }
 		public string Name { get; set; }
@@ -107,17 +107,22 @@ namespace DotLiquid
 			                "Arguments need to be all named or all unnamed. Example: count: i or simply i");
 			        }
 
-			        var filterArgs = new List<Tuple<string, object>>();
-                    filterArgs.Add(new Tuple<string, object>("input", output));
+			        //var filterArgs = new List<Tuple<string, object>>();
+                    //filterArgs.Add(new Tuple<string, object>("input", output));
                     var list = filter.Arguments.Select(a => ResolveArgumentContextVariables(context, a)).ToList();
-			        foreach (var tuple in list)
+			        /*
+                    foreach (var tuple in list)
 			        {
 			            filterArgs.Add(new Tuple<string, object>(tuple.Item1, tuple.Item2));
 			        }
+                     * */
 
 			        try
 			        {
-			            output = context.Invoke(filter.Name, filterArgs);
+			            //output = context.Invoke(filter.Name, filterArgs);
+			            var filterArgs = list.Select(x => String.Format("{0}:{1}", x.Item1, x.Item2)).ToList<object>();
+                        filterArgs.Insert(0, output);
+                        output = context.Invoke(filter.Name, filterArgs);
 			        }
 			        catch (FilterNotFoundException ex)
 			        {

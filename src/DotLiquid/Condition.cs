@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using DotLiquid.Exceptions;
 using DotLiquid.Util;
 
@@ -155,6 +156,62 @@ namespace DotLiquid
 			return true;
 		}
 	}
+
+    public class ForCondition : Condition
+    {
+        public override bool IsElse
+        {
+            get { return false; }
+        }
+
+        public string CollectionName { get; set; }
+        public Dictionary<string, string> Attributes { get; set; }
+        public string ContinueVariableName { get; set; }
+
+        public override bool Evaluate(Context context)
+        {
+            object collection = context[CollectionName];
+
+            if (!(collection is IEnumerable))
+            {
+                return false;
+            }
+
+            int from = (Attributes.ContainsKey("offset"))
+                ? (Attributes["offset"] == "continue")
+                    ? Convert.ToInt32(context.Registers.Get<Hash>("for")[ContinueVariableName])
+                    : Convert.ToInt32(context[Attributes["offset"]])
+                : 0;
+
+            int? limit = Attributes.ContainsKey("limit") ? context[Attributes["limit"]] as int? : null;
+            int? to = (limit != null) ? (int?)(limit.Value + from) : null;
+
+            List<object> segment = SliceCollectionUsingEach((IEnumerable)collection, from, to);
+
+            if (!segment.Any())
+            {
+                return false;
+            }
+            return true;
+        }
+
+        private static List<object> SliceCollectionUsingEach(IEnumerable collection, int from, int? to)
+        {
+            var segments = new List<object>();
+            int index = 0;
+            foreach (object item in collection)
+            {
+                if (to != null && to.Value <= index)
+                    break;
+
+                if (from <= index)
+                    segments.Add(item);
+
+                ++index;
+            }
+            return segments;
+        }
+    }
 
 	public delegate bool ConditionOperatorDelegate(object left, object right);
 }

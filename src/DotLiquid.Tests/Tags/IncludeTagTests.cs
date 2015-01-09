@@ -21,6 +21,9 @@ namespace DotLiquid.Tests.Tags
 					case "locale_variables":
 						return "Locale: {{echo1}} {{echo2}}";
 
+                    case "variant_static":
+                        return "Variant: {{ variant_static }}";
+
 					case "variant":
 						return "Variant: {{ variant.title }}";
 
@@ -83,6 +86,12 @@ namespace DotLiquid.Tests.Tags
         public void TestIncludeTagWithStatic()
         {
             Assert.AreEqual("Locale: echo1 ", Template.Parse("{% include 'locale_variables' with 'echo1' %}").Render());
+        }
+
+        [Test]
+        public void TestIncludeTagWithLocalStaticVariable()
+        {
+            Assert.AreEqual("Variant: test123", Template.Parse("{% include 'variant_static' with 'test123' %}").Render());
         }
 
 		[Test]

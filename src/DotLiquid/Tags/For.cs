@@ -98,8 +98,8 @@ namespace DotLiquid.Tags
         }
         public override void Render(Context context, TextWriter result)
         {
-            context.Stack(() =>
-            {
+            //context.Stack(() =>
+            //{
                 bool executeElseBlock = true;
                 _blocks.ForEach(block =>
                 {
@@ -117,7 +117,7 @@ namespace DotLiquid.Tags
                         Render(block, context, result);
                     }
                 });
-            });
+            //});
         }
 
 		public void Render(Condition condition, Context context, TextWriter result)

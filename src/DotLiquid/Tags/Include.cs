@@ -52,7 +52,7 @@ namespace DotLiquid.Tags
 				foreach (var keyValue in _attributes)
 					context[keyValue.Key] = context[keyValue.Value];
 
-				if (variable is IEnumerable)
+				if (variable is IEnumerable && !(variable is string))
 				{
 					((IEnumerable) variable).Cast<object>().ToList().ForEach(v =>
 					{

@@ -79,6 +79,12 @@ namespace DotLiquid.Tests.Tags
 			Assert.AreEqual("Product: Draft 151cm ", Template.Parse("{% include 'product' with products[0] %}").Render(Hash.FromAnonymousObject(new { products = new[] { Hash.FromAnonymousObject(new { title = "Draft 151cm" }), Hash.FromAnonymousObject(new { title = "Element 155cm" }) } })));
 		}
 
+        [Test]
+        public void TestIncludeTagWithStatic()
+        {
+            Assert.AreEqual("Locale: echo1 ", Template.Parse("{% include 'locale_variables' with 'echo1' %}").Render());
+        }
+
 		[Test]
 		public void TestIncludeTagWithDefaultName()
 		{

@@ -83,12 +83,6 @@ namespace DotLiquid.Tests.Tags
 		}
 
         [Test]
-        public void TestIncludeTagWithStatic()
-        {
-            Assert.AreEqual("Locale: echo1 ", Template.Parse("{% include 'locale_variables' with 'echo1' %}").Render());
-        }
-
-        [Test]
         public void TestIncludeTagWithLocalStaticVariable()
         {
             Assert.AreEqual("Variant: test123", Template.Parse("{% include 'variant_static' with 'test123' %}").Render());

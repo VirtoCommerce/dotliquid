@@ -430,11 +430,11 @@ namespace DotLiquid
 		/// <param name="input"></param>
 		/// <param name="string"></param>
 		/// <returns></returns>
-		public static string Append(string input, string @string)
+		public static string Append(object input, string @string)
 		{
 			return input == null
-				? input
-				: input + @string;
+				? null
+				: input.ToString() + @string;
 		}
 
 		/// <summary>
@@ -570,7 +570,17 @@ namespace DotLiquid
 
 		private static object DoMathsOperation(object input, object operand, Func<Expression, Expression, BinaryExpression> operation)
 		{
-			return input == null || operand == null
+            // try convert input into integer if possible instead of using text
+		    if (input is string)
+		    {
+		        int inputInt;
+		        if (Int32.TryParse(input.ToString(), out inputInt))
+		        {
+		            return DoMathsOperation(inputInt, operand, operation);
+		        }
+		    }
+
+		    return input == null || operand == null
 				? null
 				: ExpressionUtility.CreateExpression(operation, input.GetType(), operand.GetType(), input.GetType(), true)
 					.DynamicInvoke(input, operand);

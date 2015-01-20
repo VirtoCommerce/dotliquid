@@ -70,7 +70,7 @@ namespace DotLiquid.Util
             if (leftTypeCode == rightTypeCode)
                 return;
 
-            if (leftTypeCode > rightTypeCode)
+            if (leftTypeCode > rightTypeCode && leftTypeCode != TypeCode.String)
                 right = Expression.Convert(right, left.Type);
             else
                 left = Expression.Convert(left, right.Type);

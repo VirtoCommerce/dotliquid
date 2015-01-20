@@ -457,6 +457,13 @@ namespace DotLiquid.Tests.Tags
 				"{%cycle 1: 'one', 'two' %} {%cycle 2: 'one', 'two' %} {%cycle 1: 'one', 'two' %} {%cycle 2: 'one', 'two' %} {%cycle 1: 'one', 'two' %} {%cycle 2: 'one', 'two' %}");
 		}
 
+        [Test]
+        public void TestMultipleNamedCycles2()
+        {
+            Helper.AssertTemplateResult("one one two two one one",
+                "{%cycle 'cycle 1': 'one', 'two' %} {%cycle 'cycle 2': 'one', 'two' %} {%cycle 'cycle 1': 'one', 'two' %} {%cycle 'cycle 2': 'one', 'two' %} {%cycle 'cycle 1': 'one', 'two' %} {%cycle 'cycle 2': 'one', 'two' %}");
+        }
+
 		[Test]
 		public void TestMultipleNamedCyclesWithNamesFromContext()
 		{

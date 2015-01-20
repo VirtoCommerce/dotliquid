@@ -347,9 +347,19 @@ namespace DotLiquid
 			if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(@string))
 				return input;
 
-			return string.IsNullOrEmpty(input)
-				? input
-				: Regex.Replace(input, @string, replacement);
+			if(string.IsNullOrEmpty(input))
+                return input;
+
+		    try
+		    {
+                input = Regex.Replace(input, @string, replacement);
+		    }
+		    catch (Exception)
+		    {
+		        input = input.Replace(@string, replacement);
+		    }
+
+		    return input;
 		}
 
 #if NET35

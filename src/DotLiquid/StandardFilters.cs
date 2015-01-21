@@ -350,13 +350,14 @@ namespace DotLiquid
 			if(string.IsNullOrEmpty(input))
                 return input;
 
-		    try
+		    //try
 		    {
-                input = Regex.Replace(input, @string, replacement);
+                input = input.Replace(@string, replacement);
+                //input = Regex.Replace(input, @string, replacement);
 		    }
-		    catch (Exception)
+		    //catch (Exception)
 		    {
-		        input = input.Replace(@string, replacement);
+		        
 		    }
 
 		    return input;

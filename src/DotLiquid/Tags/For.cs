@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using DotLiquid.Exceptions;
 using DotLiquid.Util;
@@ -141,7 +142,7 @@ namespace DotLiquid.Tags
 			int? limit = _attributes.ContainsKey("limit") ? context[_attributes["limit"]] as int? : null;
 			int? to = (limit != null) ? (int?) (limit.Value + from) : null;
 
-			List<object> segment = SliceCollectionUsingEach((IEnumerable) collection, from, to);
+            List<object> segment = SliceCollection((IEnumerable)collection, from, to);
 
 		    if (!segment.Any())
 		    {
@@ -206,6 +207,22 @@ namespace DotLiquid.Tags
 			}
 			return segments;
 		}
+
+        private static List<object> SliceCollection(IEnumerable collection, int from, int? to)
+        {
+            var segments = new List<object>();
+            if (from != 0 || to != null && collection is ILoadSlice)
+            {
+                (collection as ILoadSlice).LoadSlice(from, to);
+                segments.AddRange(collection.Cast<object>());
+            }
+            else
+            {
+                segments = SliceCollectionUsingEach(collection, from, to);
+            }
+
+            return segments;
+        }
 
         private void RecordForCondition(string markup, string collectionName, string variableName, Dictionary<string, string> attributes)
         {

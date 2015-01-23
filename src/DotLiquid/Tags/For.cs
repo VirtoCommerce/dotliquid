@@ -211,7 +211,7 @@ namespace DotLiquid.Tags
         private static List<object> SliceCollection(IEnumerable collection, int from, int? to)
         {
             var segments = new List<object>();
-            if (from != 0 || to != null && collection is ILoadSlice)
+            if ((from != 0 || to != null) && collection is ILoadSlice)
             {
                 (collection as ILoadSlice).LoadSlice(from, to);
                 segments.AddRange(collection.Cast<object>());

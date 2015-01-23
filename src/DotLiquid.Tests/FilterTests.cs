@@ -4,7 +4,9 @@ using NUnit.Framework;
 
 namespace DotLiquid.Tests
 {
-	[TestFixture]
+    using System.Text.RegularExpressions;
+
+    [TestFixture]
 	public class FilterTests
 	{
 		#region Classes used in tests
@@ -29,6 +31,22 @@ namespace DotLiquid.Tests
 				return string.Format(" {0:d}$ CAD ", input);
 			}
 		}
+
+        /*
+        private static class SubstituteFilter
+        {
+            public static string Substitute(string input, params string[] values)
+            {
+                //input = Regex.Replace(input, @string, replacement);
+                foreach (var value in values)
+                {
+                    input = input.Replace(input, @string, value);
+                }
+                input = input.Replace().Replace(input, @string, replacement);
+                return input;
+            }
+        }
+         * */
 
 		private static class FiltersWithArguments
 		{
@@ -222,5 +240,18 @@ namespace DotLiquid.Tests
 			_context.AddFilters(typeof(ContextFilters));
 			Assert.AreEqual(" King Kong has 1000$ ", new Variable("var | bank_statement").Render(_context));
 		}
+
+        /*
+        [Test]
+        public void TestFilterWithKeywordArguments()
+        {
+            Template.RegisterFilter(typeof(Subs));
+
+            Assert.AreEqual(" 1000$ ", Template.Parse("{{1000 | money}}").Render());
+            Assert.AreEqual(" 1000$ CAD ", Template.Parse("{{1000 | money}}").Render(new RenderParameters { Filters = new[] { typeof(CanadianMoneyFilter) } }));
+            Assert.AreEqual(" 1000$ CAD ", Template.Parse("{{1000 | money}}").Render(new RenderParameters { Filters = new[] { typeof(CanadianMoneyFilter) } }));
+        }
+         * */
+
 	}
 }

@@ -9,7 +9,6 @@ using DotLiquid.Util;
 namespace DotLiquid
 {
     using System;
-    using System.Reflection;
 
     /// <summary>
 	/// Holds variables. Variables are only loaded "just in time"
@@ -24,8 +23,8 @@ namespace DotLiquid
 	/// </summary>
 	public class Variable : IRenderable
 	{
-		public static readonly string FilterParser = string.Format(R.Q(@"(?:{0}|(?:\s*(?!(?:{0}))(?:{1}|\S+)\s*)+)"), Liquid.FilterSeparator, Liquid.QuotedFragment);
-        private static string QuotedFragment = string.Format(R.Q(@"{0}|(?:[^,\|'""]|{0})+"), Liquid.QuotedString);
+		//public static readonly string FilterParser = string.Format(R.Q(@"(?:{0}|(?:\s*(?!(?:{0}))(?:{1}|\S+)\s*)+)"), Liquid.FilterSeparator, Liquid.QuotedFragment);
+        public static readonly string FilterParser = string.Format(R.Q(@"(?:\s+|{0}|{1})+"), Liquid.QuotedFragment, Liquid.ArgumentSeparator);
 
 		public List<Filter> Filters { get; set; }
 		public string Name { get; set; }
@@ -39,29 +38,52 @@ namespace DotLiquid
 			Name = null;
 			Filters = new List<Filter>();
 
-			Match match = Regex.Match(markup, string.Format(R.Q(@"\s*({0})(.*)"), Liquid.QuotedAssignFragment));
+			var match = Regex.Match(markup, string.Format(R.Q(@"\s*({0})(.*)"), Liquid.QuotedAssignFragment));
 			if (match.Success)
 			{
 				Name = match.Groups[1].Value;
-				Match filterMatch = Regex.Match(match.Groups[2].Value, string.Format(R.Q(@"{0}\s*(.*)"), Liquid.FilterSeparator));
+				var filterMatch = Regex.Match(match.Groups[2].Value, string.Format(R.Q(@"{0}\s*(.*)"), Liquid.FilterSeparator));
 				if (filterMatch.Success)
 				{
-					foreach (string f in R.Scan(filterMatch.Value, FilterParser))
+					foreach (var f in R.Scan(filterMatch.Value, FilterParser))
 					{
-						Match filterNameMatch = Regex.Match(f, R.Q(@"\s*(\w+)"));
+						var filterNameMatch = Regex.Match(f, R.Q(@"\s*(\w+)"));
 						if (filterNameMatch.Success)
 						{
 							string filterName = filterNameMatch.Groups[1].Value;
+                            var filterArgs = R.Scan(f, string.Format(R.Q(@"(?:{0}|{1})\s*((?:\w+\s*\:\s*)?{2})"), Liquid.FilterArgumentSeparator, Liquid.ArgumentSeparator, Liquid.QuotedFragment));
 
-                            List<string> filterArgs = R.Scan(f, string.Format(R.Q(@"(?:{0}|{1})\s*({2})"), Liquid.FilterArgumentSeparator, Liquid.ArgumentSeparator, QuotedFragment));
-							Filters.Add(new Filter(filterName, filterArgs.ToArray()));
+                            // now need to parse keyword and non keyword arguments                           
+						    var filter = ParseFilterExpressions(filterName, filterArgs.ToArray());
+							Filters.Add(filter);
 						}
 					}
 				}
 			}
 		}
 
-		public void Render(Context context, TextWriter result)
+	    private Filter ParseFilterExpressions(string filterName, string[] unparsedArgs)
+	    {
+	        var filterArguments = new List<string>();
+            var filterKeywordArguments = new Dictionary<string, string>();
+	        foreach (var filterArg in unparsedArgs)
+	        {
+	            var keywordArgumentMatch = Regex.Match(filterArg, string.Format(R.Q(@"\A({0})\z"), Liquid.TagAttributes));
+	            if (keywordArgumentMatch.Success)
+	            {
+                    filterKeywordArguments.Add(keywordArgumentMatch.Groups[2].Value, keywordArgumentMatch.Groups[3].Value);
+	            }
+	            else
+	            {
+	                filterArguments.Add(filterArg);
+	            }
+	        }
+
+	        var filter = new Filter(filterName, filterArguments.ToArray()) { KeywordArguments = filterKeywordArguments };
+	        return filter;
+	    }
+
+	    public void Render(Context context, TextWriter result)
 		{
 			object output = RenderInternal(context);
 
@@ -95,63 +117,20 @@ namespace DotLiquid
 			if (Name == null)
 				return null;
 
-			var output = context[Name];
+			object output = context[Name];
 
 			Filters.ToList().ForEach(filter =>
 			{
-			    if (filter.Arguments.Any(a => a.Contains(":") && !a.StartsWith("'")))
-			    {
-			        if (!filter.Arguments.All(a => a.Contains(":") && !a.StartsWith("'"))) // generate exception, all elements need to be named
-			        {
-			            throw new InvalidFilterCriteriaException(
-			                "Arguments need to be all named or all unnamed. Example: count: i or simply i");
-			        }
-
-			        //var filterArgs = new List<Tuple<string, object>>();
-                    //filterArgs.Add(new Tuple<string, object>("input", output));
-                    var list = filter.Arguments.Select(a => ResolveArgumentContextVariables(context, a)).ToList();
-			        /*
-                    foreach (var tuple in list)
-			        {
-			            filterArgs.Add(new Tuple<string, object>(tuple.Item1, tuple.Item2));
-			        }
-                     * */
-
-			        try
-			        {
-			            //output = context.Invoke(filter.Name, filterArgs);
-			            var filterArgs = list.Select(x => String.Format("{0}:{1}", x.Item1, x.Item2)).ToList<object>();
-                        filterArgs.Insert(0, output);
-                        output = context.Invoke(filter.Name, filterArgs);
-			        }
-			        catch (FilterNotFoundException ex)
-			        {
-			            throw new FilterNotFoundException(
-			                string.Format(
-			                    Liquid.ResourceManager.GetString("VariableFilterNotFoundException"),
-			                    filter.Name,
-			                    _markup.Trim()),
-			                ex);
-			        }
-			    }
-			    else
-			    {
-			        var filterArgs = filter.Arguments.Select(a => context[a]).ToList();
-			        try
-			        {
-			            filterArgs.Insert(0, output);
-			            output = context.Invoke(filter.Name, filterArgs);
-			        }
-			        catch (FilterNotFoundException ex)
-			        {
-			            throw new FilterNotFoundException(
-			                string.Format(
-			                    Liquid.ResourceManager.GetString("VariableFilterNotFoundException"),
-			                    filter.Name,
-			                    _markup.Trim()),
-			                ex);
-			        }
-			    }
+                var filterArgs = EvaluateFilterExpressions(context, filter.Arguments, filter.KeywordArguments);
+				try
+				{
+					filterArgs.Insert(0, output);
+					output = context.Invoke(filter.Name, filterArgs);
+				}
+				catch (FilterNotFoundException ex)
+				{
+					throw new FilterNotFoundException(string.Format(Liquid.ResourceManager.GetString("VariableFilterNotFoundException"), filter.Name, _markup.Trim()), ex);
+				}
 			});
 
             if (output is IValueTypeConvertible)
@@ -160,22 +139,22 @@ namespace DotLiquid
 			return output;
 		}
 
-        /// <summary>
-        /// Resolved context inside argument, can work with named keyword contexts, aka "count: i" where i is avariable and will return
-        /// "count: 1" if variable is set to "1".
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="argument"></param>
-        /// <returns></returns>
-        private Tuple<string, object> ResolveArgumentContextVariables(Context context, string argument)
-        {
-            var left = argument.Substring(0, argument.IndexOf(":", System.StringComparison.Ordinal));
-            var right = argument.Substring(argument.IndexOf(":", System.StringComparison.Ordinal)+1);
+	    private List<object> EvaluateFilterExpressions(
+	        Context context,
+	        string[] filterArgs,
+	        Dictionary<string, string> filterKeywordArgs)
+	    {
+	        var parsedArgs = filterArgs.Select(x => context[x]).ToList();
+	        if (filterKeywordArgs != null && filterKeywordArgs.Any())
+	        {
+	            var parsedKeywordArgs = filterKeywordArgs.Select(x => new Tuple<string, object>(x.Key, context[x.Value])).ToList();
+                parsedArgs.AddRange(parsedKeywordArgs);
+	        }
 
-            return new Tuple<string, object>(left, context[right.Trim()]);
-        }
+	        return parsedArgs;
+	    }
 
-        /// <summary>
+		/// <summary>
 		/// Primarily intended for testing.
 		/// </summary>
 		/// <param name="context"></param>
@@ -187,14 +166,19 @@ namespace DotLiquid
 
 		public class Filter
 		{
-			public Filter(string name, string[] arguments)
+			public Filter(string name, string[] arguments, IDictionary<string, string> keywordArguments = null)
 			{
 				Name = name;
 				Arguments = arguments;
+
+                if (keywordArguments != null)
+			        KeywordArguments = new Dictionary<string, string>(keywordArguments);
 			}
 
 			public string Name { get; set; }
 			public string[] Arguments { get; set; }
+
+            public Dictionary<string, string> KeywordArguments { get; set; }
 		}
 	}
 }

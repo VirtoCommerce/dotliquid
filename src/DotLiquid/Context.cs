@@ -82,6 +82,7 @@ namespace DotLiquid
 			//throw new FilterNotFoundException("Filter not found: '{0}'", method);
 		}
 
+        /*
         public object Invoke(string method, IList<Tuple<string, object>> args)
         {
             if (Strainer.RespondTo(method))
@@ -89,6 +90,7 @@ namespace DotLiquid
 
             return args.First();
         }
+         * */
 
 		/// <summary>
 		/// Push new local scope on the stack. use <tt>Context#stack</tt> instead

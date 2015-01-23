@@ -73,6 +73,65 @@ namespace DotLiquid
 			return _methods.ContainsKey(method);
 		}
 
+        public object Invoke(string method, List<object> args)
+        {
+            // First, try to find a method with the same number of arguments.
+            var methodInfo = _methods[method].FirstOrDefault(m => m.GetParameters().Length == args.Count);
+
+            // If we failed to do so, try one with max numbers of arguments, hoping
+            // that those not explicitly specified will be taken care of
+            // by default values
+            if (methodInfo == null)
+                methodInfo = _methods[method].OrderByDescending(m => m.GetParameters().Length).First();
+
+            var parameterInfos = methodInfo.GetParameters();
+
+            // If first parameter is Context, send in actual context.
+            if (parameterInfos.Length > 0 && parameterInfos[0].ParameterType == typeof(Context))
+                args.Insert(0, _context);
+
+            var hasParams = false;
+            if (parameterInfos.Length > 0)
+                hasParams = parameterInfos[parameterInfos.Length - 1].GetCustomAttributes(typeof(ParamArrayAttribute), false).Length > 0;
+
+            if (hasParams)
+            {
+                var lastParamPosition = parameterInfos.Length - 1;
+
+                var realParams = new object[parameterInfos.Length];
+                for (var i = 0; i < lastParamPosition; i++)
+                    realParams[i] = args[i];
+
+                var paramsType = parameterInfos[lastParamPosition].ParameterType.GetElementType();
+                var extra = Array.CreateInstance(paramsType, args.Count - lastParamPosition);
+                for (var i = 0; i < extra.Length; i++)
+                    extra.SetValue(args[i + lastParamPosition], i);
+
+                realParams[lastParamPosition] = extra;
+
+                args = new List<object>(realParams);
+            }
+
+            // Add in any default parameters - .NET won't do this for us. Since they need to be at the end, make sure they are named
+            if (parameterInfos.Length > args.Count)
+                for (int i = args.Count; i < parameterInfos.Length; ++i)
+                {
+                    if ((parameterInfos[i].Attributes & ParameterAttributes.HasDefault) != ParameterAttributes.HasDefault)
+                        throw new SyntaxException(Liquid.ResourceManager.GetString("StrainerFilterHasNoValueException"), method, parameterInfos[i].Name);
+                    args.Add(new Tuple<string, object>(parameterInfos[i].Name, parameterInfos[i].DefaultValue));
+                }
+
+            try
+            {
+                return methodInfo.Invoke(null, args.ToArray());
+            }
+            catch (TargetInvocationException ex)
+            {
+                throw ex.InnerException;
+            }
+        }
+
+        /*
 		public object Invoke(string method, List<object> args)
 		{
 			// First, try to find a method with the same number of arguments.
@@ -130,7 +189,9 @@ namespace DotLiquid
 				throw ex.InnerException;
 			}
 		}
+         * */
 
+        /*
         public object Invoke(string method, IList<Tuple<string, object>> args)
         {
             // First, try to find a method with the same number of arguments.
@@ -166,5 +227,6 @@ namespace DotLiquid
                 throw ex.InnerException;
             }
         }
+         * */
 	}
 }

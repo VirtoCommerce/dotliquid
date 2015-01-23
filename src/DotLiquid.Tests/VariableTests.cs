@@ -2,7 +2,11 @@ using NUnit.Framework;
 
 namespace DotLiquid.Tests
 {
-	[TestFixture]
+    using System.Collections.Generic;
+
+    using DotLiquid.Util;
+
+    [TestFixture]
 	public class VariableTests
 	{
 		[Test]
@@ -128,16 +132,44 @@ namespace DotLiquid.Tests
 			Assert.AreEqual("test.test", var.Name);
 		}
 
+        [Test]
+        public void TestFilterWithKeywordArguments()
+        {
+            Variable var = new Variable(" hello | things: greeting: \"world\", farewell: 'goodbye' ");
+            Assert.AreEqual("hello", var.Name);
+
+            var values = new Dictionary<string, string>()
+            {
+                { "greeting", "\"world\"" },
+                { "farewell", "'goodbye'"}
+            };
+
+            AssertFiltersAreEqual(new[] { new Variable.Filter("things", null, values) }, var.Filters);
+        }
+
 		private static void AssertFiltersAreEqual(Variable.Filter[] expected, System.Collections.Generic.List<Variable.Filter> actual)
 		{
 			Assert.AreEqual(expected.Length, actual.Count);
 			for (int i = 0; i < expected.Length; ++i)
 			{
 				Assert.AreEqual(expected[i].Name, actual[i].Name);
-				Assert.AreEqual(expected[i].Arguments.Length, actual[i].Arguments.Length);
-				for (int j = 0; j < expected[i].Arguments.Length; ++j)
-					Assert.AreEqual(expected[i].Arguments[j], actual[i].Arguments[j]);
+			    if (expected[i].Arguments != null)
+			    {
+			        Assert.AreEqual(expected[i].Arguments.Length, actual[i].Arguments.Length);
+
+			        for (var j = 0; j < expected[i].Arguments.Length; ++j) Assert.AreEqual(expected[i].Arguments[j], actual[i].Arguments[j]);
+			    }
+
+			    if (expected[i].KeywordArguments != null)
+			    {
+                    Assert.AreEqual(expected[i].KeywordArguments.Count, actual[i].KeywordArguments.Count);
+			        foreach (var key in expected[i].KeywordArguments.Keys)
+			        {
+			            Assert.AreEqual(expected[i].KeywordArguments[key], actual[i].KeywordArguments[key]);
+			        }
+			    }
 			}
 		}
+
 	}
 }

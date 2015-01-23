@@ -123,7 +123,7 @@ namespace DotLiquid
 
             try
             {
-                return methodInfo.Invoke(null, args.ToArray());
+                return methodInfo.InvokeWithNamedParameters(null, args.ToArray());
             }
             catch (TargetInvocationException ex)
             {

@@ -10,7 +10,7 @@ namespace DotLiquid.Util
 
     public static class ReflectionExtensionMethods
     {
-        public static object InvokeWithNamedParameters(this MethodBase self, object obj, List<object> paramaters)
+        public static object InvokeWithNamedParameters(this MethodBase self, object obj, object[] paramaters)
         {
             var allArgs = new List<object>();
 
@@ -18,7 +18,8 @@ namespace DotLiquid.Util
             var namedParameters = paramaters.Where(x => (x is Tuple<string, object>)).Select(x => x as Tuple<string, object>).ToDictionary(x => x.Item1, x => x.Item2);
 
             allArgs.AddRange(positionedParameters);
-            allArgs.AddRange(MapParameters(self, namedParameters));
+            if (namedParameters.Any())
+                allArgs.AddRange(MapParameters(self, namedParameters));
 
             return self.Invoke(obj, allArgs.ToArray());
         }

@@ -215,6 +215,13 @@ namespace DotLiquid.Tests
 			Assert.AreEqual("bla blub", new Variable("var | strip_html").Render(_context));
 		}
 
+        [Test]
+        public void TestStripHtmlAndTruncateWords()
+        {
+            _context["var"] = "<b>bla blub</a>";
+            Assert.AreEqual("bla...", new Variable("var | strip_html | truncatewords: 1").Render(_context));
+        }
+
 		[Test]
 		public void Capitalize()
 		{

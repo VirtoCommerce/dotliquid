@@ -48,10 +48,10 @@ namespace DotLiquid.Tests
 		[Test]
 		public void TestTruncateWords()
 		{
-			Assert.AreEqual("one two three", StandardFilters.TruncateWords("one two three", 4));
-			Assert.AreEqual("one two...", StandardFilters.TruncateWords("one two three", 2));
-			Assert.AreEqual("one two three", StandardFilters.TruncateWords("one two three"));
-			Assert.AreEqual("Two small (13&#8221; x 5.5&#8221; x 10&#8221; high) baskets fit inside one large basket (13&#8221;...", StandardFilters.TruncateWords("Two small (13&#8221; x 5.5&#8221; x 10&#8221; high) baskets fit inside one large basket (13&#8221; x 16&#8221; x 10.5&#8221; high) with cover.", 15));
+			Assert.AreEqual("one two three", StandardFilters.Truncatewords("one two three", 4));
+			Assert.AreEqual("one two...", StandardFilters.Truncatewords("one two three", 2));
+			Assert.AreEqual("one two three", StandardFilters.Truncatewords("one two three"));
+			Assert.AreEqual("Two small (13&#8221; x 5.5&#8221; x 10&#8221; high) baskets fit inside one large basket (13&#8221;...", StandardFilters.Truncatewords("Two small (13&#8221; x 5.5&#8221; x 10&#8221; high) baskets fit inside one large basket (13&#8221; x 16&#8221; x 10.5&#8221; high) with cover.", 15));
 		}
 
 		[Test]

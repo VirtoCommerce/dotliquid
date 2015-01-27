@@ -145,19 +145,19 @@ namespace DotLiquid
 		}
 
 #if NET35
-        public static string TruncateWords(string input)
+        public static string Truncatewords(string input)
         {
             return TruncateWords(input, 15);
         }
 
-        public static string TruncateWords(string input, int words)
+        public static string Truncatewords(string input, int words)
         {
             return TruncateWords(input, words, "...");
         }
 
-        public static string TruncateWords(string input, int words, string truncateString)
+        public static string Truncatewords(string input, int words, string truncateString)
 #else
-		public static string TruncateWords(string input, int words = 15, string truncateString = "...")
+		public static string Truncatewords(string input, int words = 15, string truncateString = "...")
 #endif
 		{
 			if (string.IsNullOrEmpty(input))
@@ -184,11 +184,15 @@ namespace DotLiquid
 				: input.Split(new[] { pattern }, StringSplitOptions.RemoveEmptyEntries);
 		}
 
-		public static string StripHtml(string input)
+		public static string StripHtml(object input)
 		{
-			return input.IsNullOrWhiteSpace()
-				? input
-				: Regex.Replace(input, @"<.*?>", string.Empty);
+		    if (input == null) return String.Empty;
+
+		    var inputString = input.ToString();
+
+            return inputString.IsNullOrWhiteSpace()
+                ? inputString
+                : Regex.Replace(inputString, @"<.*?>", string.Empty);
 		}
 
 		/// <summary>

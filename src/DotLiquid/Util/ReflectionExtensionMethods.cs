@@ -19,21 +19,21 @@ namespace DotLiquid.Util
 
             allArgs.AddRange(positionedParameters);
             if (namedParameters.Any())
-                allArgs.AddRange(MapParameters(self, namedParameters));
+                allArgs.AddRange(MapParameters(self, positionedParameters.Count(), namedParameters));
 
             return self.Invoke(obj, allArgs.ToArray());
         }
 
-        public static object[] MapParameters(MethodBase method, IDictionary<string, object> namedParameters)
+        public static object[] MapParameters(MethodBase method, int skip, IDictionary<string, object> namedParameters)
         {
-            var paramNames = method.GetParameters().Select(p => p.Name).ToArray();
+            var paramNames = method.GetParameters().Select(p => p.Name).Skip(skip).ToArray();
             var parameters = new object[paramNames.Length];
+
             for (var i = 0; i < parameters.Length; ++i)
             {
                 parameters[i] = Type.Missing;
             }
 
-            //var indexInCollection = 0;
             foreach (var item in namedParameters)
             {
                 var paramName = item.Key;
@@ -41,10 +41,9 @@ namespace DotLiquid.Util
                 if (paramIndex == -1) // skip not found parameters
                     continue;
                 
-                //var paramIndex = index == -1 ? indexInCollection : index;
                 parameters[paramIndex] = item.Value;
-                //indexInCollection++;
             }
+
             return parameters;
         }
     }

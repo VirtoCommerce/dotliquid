@@ -491,7 +491,12 @@ namespace DotLiquid
 			if (format.IsNullOrWhiteSpace())
 				return input.ToString();
 
-			DateTime date;
+            DateTime date;
+		    if (input.ToString().Equals("now", StringComparison.OrdinalIgnoreCase))
+		    {
+		        date = DateTime.Now;
+		        return Liquid.UseRubyDateFormat ? date.ToStrFTime(format) : date.ToString(format);
+		    }
 
 			return DateTime.TryParse(input.ToString(), out date)
 				? Liquid.UseRubyDateFormat ? date.ToStrFTime(format) : date.ToString(format)

@@ -203,9 +203,9 @@ namespace DotLiquid
 				case "false":
 					return false;
 				case "blank":
-					return new Symbol(o => o is IEnumerable && !((IEnumerable) o).Cast<object>().Any());
+					return new Symbol(o => o is IEnumerable && !((IEnumerable) o).Cast<object>().Any() || o == null);
 				case "empty":
-					return new Symbol(o => o is IEnumerable && !((IEnumerable) o).Cast<object>().Any());
+					return new Symbol(o => o is IEnumerable && !((IEnumerable) o).Cast<object>().Any() || o == null);
 			}
 
 			// Single quoted strings.

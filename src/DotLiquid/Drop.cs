@@ -110,7 +110,7 @@ namespace DotLiquid
 			// without realising that the default naming convention is Ruby-style.
 			// To try to help with this, we check if the given name *would* match,
 			// if we were using Ruby-style names.
-			if (Template.NamingConvention is RubyNamingConvention)
+			if (Template.NamingConvention is RubyNamingConvention && method != null)
 			{
 				string rubyMethod = Template.NamingConvention.GetMemberName(method);
 
@@ -133,13 +133,16 @@ namespace DotLiquid
 		{
 			string method = (string)name;
 
-			MethodInfo mi;
-			if (TypeResolution.CachedMethods.TryGetValue(method, out mi))
-				return mi.Invoke(GetObject(), null);
-			PropertyInfo pi;
-			if (TypeResolution.CachedProperties.TryGetValue(method, out pi))
-				return pi.GetValue(GetObject(), null);
-			return BeforeMethod(method);
+            if (method != null) // no need to find cached methods for null
+            {
+                MethodInfo mi;
+                if (TypeResolution.CachedMethods.TryGetValue(method, out mi))
+                    return mi.Invoke(GetObject(), null);
+                PropertyInfo pi;
+                if (TypeResolution.CachedProperties.TryGetValue(method, out pi))
+                    return pi.GetValue(GetObject(), null);
+            }
+            return BeforeMethod(method);
 		}
 
 		public virtual bool ContainsKey(object name)

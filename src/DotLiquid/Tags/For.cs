@@ -139,7 +139,20 @@ namespace DotLiquid.Tags
 					: Convert.ToInt32(context[_attributes["offset"]])
 				: 0;
 
-			int? limit = _attributes.ContainsKey("limit") ? context[_attributes["limit"]] as int? : null;
+		    int? limit = null;
+		    if (_attributes.ContainsKey("limit"))
+		    {
+		        var objectInt = context[_attributes["limit"]];
+		        if (objectInt != null)
+		        {
+		            int parsedNumber;
+		            if (int.TryParse(objectInt.ToString(), out parsedNumber))
+		            {
+		                limit = parsedNumber;
+		            }
+		        }
+		    }
+			//limit = _attributes.ContainsKey("limit") ? context[_attributes["limit"]] as int? : null;
 			int? to = (limit != null) ? (int?) (limit.Value + from) : null;
 
             List<object> segment = SliceCollection((IEnumerable)collection, from, to);

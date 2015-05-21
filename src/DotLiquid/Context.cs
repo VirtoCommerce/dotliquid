@@ -79,18 +79,7 @@ namespace DotLiquid
 				return Strainer.Invoke(method, args);
 
 			return args.First();
-			//throw new FilterNotFoundException("Filter not found: '{0}'", method);
 		}
-
-        /*
-        public object Invoke(string method, IList<Tuple<string, object>> args)
-        {
-            if (Strainer.RespondTo(method))
-                return Strainer.Invoke(method, args);
-
-            return args.First();
-        }
-         * */
 
 		/// <summary>
 		/// Push new local scope on the stack. use <tt>Context#stack</tt> instead

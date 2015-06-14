@@ -246,7 +246,9 @@ namespace DotLiquid.Tests
 		{
 			Helper.AssertTemplateResult("12", "{{ 3 | times:4 }}");
             Helper.AssertTemplateResult("12", "{{ 24 | times:0.5 }}");
-			Helper.AssertTemplateResult("foofoofoofoo", "{{ 'foo' | times:4 }}");
+			// this is no longer supported
+            // Helper.AssertTemplateResult("foofoofoofoo", "{{ 'foo' | times:4 }}");
+		    Helper.AssertTemplateResult("6", "{{ '2.1' | times:3 | replace: '.','-' | plus:0}}");
 		}
 
 		[Test]
@@ -255,6 +257,7 @@ namespace DotLiquid.Tests
 			Hash assigns = Hash.FromAnonymousObject(new { a = "bc", b = "d" });
 			Helper.AssertTemplateResult("bcd", "{{ a | append: 'd'}}", assigns);
 			Helper.AssertTemplateResult("bcd", "{{ a | append: b}}", assigns);
+            Helper.AssertTemplateResult("a1", "{{ 'a' | append: 1}}", assigns);
 		}
 
 		[Test]

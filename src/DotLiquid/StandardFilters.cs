@@ -1,7 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Globalization;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Xml.XPath;
 #if !NET35
 using System.Net;
 #endif
@@ -305,6 +309,8 @@ namespace DotLiquid
 		/// <returns></returns>
 		public static IEnumerable Map(IEnumerable input, string property)
 		{
+		    if (input == null) return null;
+
 			List<object> ary = input.Cast<object>().ToList();
 			if (!ary.Any())
 				return ary;
@@ -345,18 +351,17 @@ namespace DotLiquid
 		/// <param name="string"></param>
 		/// <param name="replacement"></param>
 		/// <returns></returns>
-		public static string Replace(string input, string @string, string replacement = "")
+		public static string Replace(object input, string @string, string replacement = "")
 #endif
 		{
-			if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(@string))
-				return input;
+		    if (input == null) return null;
 
-			if(string.IsNullOrEmpty(input))
-                return input;
+			if (string.IsNullOrEmpty(input.ToString()) || string.IsNullOrEmpty(@string))
+				return input.ToString();
 
 		    //try
 		    {
-                input = input.Replace(@string, replacement);
+                input = input.ToString().Replace(@string, replacement);
                 //input = Regex.Replace(input, @string, replacement);
 		    }
 		    //catch (Exception)
@@ -364,7 +369,7 @@ namespace DotLiquid
 		        
 		    }
 
-		    return input;
+		    return input.ToString();
 		}
 
 #if NET35
@@ -445,11 +450,9 @@ namespace DotLiquid
 		/// <param name="input"></param>
 		/// <param name="string"></param>
 		/// <returns></returns>
-		public static string Append(object input, string @string)
+		public static string Append(object input, object @string)
 		{
-			return input == null
-				? null
-				: input.ToString() + @string;
+			return input + @string.ToSafeString();
 		}
 
 		/// <summary>
@@ -458,11 +461,9 @@ namespace DotLiquid
 		/// <param name="input"></param>
 		/// <param name="string"></param>
 		/// <returns></returns>
-		public static string Prepend(string input, string @string)
+		public static string Prepend(object input, object @string)
 		{
-			return input == null
-				? input
-				: @string + input;
+            return @string.ToSafeString() + input;
 		}
 
 		/// <summary>
@@ -543,9 +544,13 @@ namespace DotLiquid
 		/// <returns></returns>
 		public static object Plus(object input, object operand)
 		{
+            /*
 			return input is string
 				? string.Concat(input, operand)
 				: DoMathsOperation(input, operand, Expression.Add);
+             * */
+
+		    return DoMathsOperation(input, operand, Expression.Add);
 		}
 
 		/// <summary>
@@ -567,9 +572,12 @@ namespace DotLiquid
 		/// <returns></returns>
 		public static object Times(object input, object operand)
 		{
-			return input is string && operand is int
-				? Enumerable.Repeat((string) input, (int) operand)
-				: DoMathsOperation(input, operand, Expression.Multiply);
+			//return input is string && operand is int
+			//	? Enumerable.Repeat((string) input, (int) operand)
+			//	: DoMathsOperation(input, operand, Expression.Multiply);
+
+            return DoMathsOperation(input, operand, Expression.Multiply);
+
 		}
 
 		/// <summary>
@@ -590,21 +598,28 @@ namespace DotLiquid
 
 		private static object DoMathsOperation(object input, object operand, Func<Expression, Expression, BinaryExpression> operation)
 		{
-            // try convert input into integer if possible instead of using text
-		    if (input is string)
-		    {
-		        int inputInt;
-		        if (Int32.TryParse(input.ToString(), out inputInt))
-		        {
-		            return DoMathsOperation(inputInt, operand, operation);
-		        }
-		    }
+		    input = input.ToNumber();
+		    operand = operand.ToNumber();
 
 		    return input == null || operand == null
 				? null
 				: ExpressionUtility.CreateExpression(operation, input.GetType(), operand.GetType(), input.GetType(), true)
 					.DynamicInvoke(input, operand);
 		}
+
+        private static double Evaluate(string expression)
+        {
+            var xsltExpression =
+                string.Format("number({0})",
+                    new Regex(@"([\+\-\*])").Replace(expression, " ${1} ")
+                                            .Replace("/", " div ")
+                                            .Replace("%", " mod "));
+
+            return (double)new XPathDocument
+                (new StringReader("<r/>"))
+                    .CreateNavigator()
+                    .Evaluate(xsltExpression);
+        }
 	}
 
 	internal static class StringExtensions
@@ -613,5 +628,62 @@ namespace DotLiquid
 		{
 			return string.IsNullOrEmpty(s) || s.Trim().Length == 0;
 		}
+
+	    public static string ToSafeString(this object s)
+	    {
+	        if (s == null) return "";
+
+	        return s.ToString();
+	    }
+
+	    public static object ToNumber(this object s)
+	    {
+	        if (s is double)
+	        {
+	            return s;
+	        }
+            else if (s is float)
+            {
+                return s;
+            }
+            else if (s is int)
+            {
+                return s;
+            }
+            else if (s is string)
+            {
+                var match = Regex.Match(s as string, R.Q(@"^([+-]?\d[\d\.|\,]+)$"));
+                if (match.Success)
+                {
+                    // For cultures with "," as the decimal separator, allow
+                    // both "," and "." to be used as the separator.
+                    // First try to parse using current culture.
+                    float result;
+                    if (float.TryParse(match.Groups[1].Value, out result)) return result;
+
+                    // If that fails, try to parse using invariant culture.
+                    return float.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
+                }
+
+                match = Regex.Match(s as string, R.Q(@"^([+-]?\d+).*$"));
+                if (match.Success) return Convert.ToInt32(match.Groups[1].Value);
+            }
+
+	        return 0;
+	    }
+
+        private static double Evaluate(string expression)
+        {
+            var xsltExpression =
+                string.Format("number({0})",
+                    new Regex(@"([\+\-\*])").Replace(expression, " ${1} ")
+                                            .Replace("/", " div ")
+                                            .Replace("%", " mod "));
+
+            return (double)new XPathDocument
+                (new StringReader("<r/>"))
+                    .CreateNavigator()
+                    .Evaluate(xsltExpression);
+        }
 	}
 }

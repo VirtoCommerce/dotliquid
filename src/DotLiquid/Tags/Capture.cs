@@ -21,7 +21,7 @@ namespace DotLiquid.Tags
 	/// </summary>
 	public class Capture : DotLiquid.Block
 	{
-		private static readonly Regex Syntax = new Regex(@"(\w+)");
+        private static readonly Regex Syntax = new Regex(@"(\w+)", RegexOptions.Compiled);
 
 		private string _to;
 

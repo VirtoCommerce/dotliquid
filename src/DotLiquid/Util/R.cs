@@ -19,9 +19,10 @@ namespace DotLiquid.Util
 			//bool hasGAnchor;
 			//pattern = RegexpTransformer.Transform(pattern, out hasGAnchor);
 
-			return new Regex(pattern);
+			return new Regex(pattern, RegexOptions.Compiled);
 		}
 
+        [Obsolete("Use compiled regex instead")]
 		public static List<string> Scan(string input, string pattern)
 		{
 			return Regex.Matches(input, pattern)
@@ -29,6 +30,14 @@ namespace DotLiquid.Util
                 .Select(m => (m.Groups.Count == 2) ? m.Groups[1].Value.TrimStart(new[] { ':' }).Trim() : m.Value.TrimStart(new[] { ':' }).Trim())
 				.ToList();
 		}
+
+        public static List<string> Scan(string input, Regex regex)
+        {
+            return regex.Matches(input)
+                .Cast<Match>()
+                .Select(m => (m.Groups.Count == 2) ? m.Groups[1].Value.TrimStart(new[] { ':' }).Trim() : m.Value.TrimStart(new[] { ':' }).Trim())
+                .ToList();
+        }
 
 		/// <summary>
 		/// Overload that only works when the pattern contains two groups. The callback
@@ -38,10 +47,17 @@ namespace DotLiquid.Util
 		/// <param name="pattern"></param>
 		/// <param name="callback"></param>
 		/// <returns></returns>
+        [Obsolete("Use compiled regex instead")]
 		public static void Scan(string input, string pattern, Action<string, string> callback)
 		{
 			foreach (Match match in Regex.Matches(input, pattern))
 				callback(match.Groups[1].Value, match.Groups[2].Value);
 		}
+
+        public static void Scan(string input, Regex regex, Action<string, string> callback)
+        {
+            foreach (Match match in regex.Matches(input))
+                callback(match.Groups[1].Value, match.Groups[2].Value);
+        }
 	}
 }

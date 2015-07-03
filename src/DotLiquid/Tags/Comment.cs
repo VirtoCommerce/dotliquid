@@ -5,12 +5,14 @@ namespace DotLiquid.Tags
 {
 	public class Comment : DotLiquid.Block
 	{
+        private static Regex _commentRegex = new Regex(Liquid.CommentShorthand, RegexOptions.Compiled);
+
 		public static string FromShortHand(string @string)
 		{
 			if (@string == null)
 				return @string;
 
-			Match match = Regex.Match(@string, Liquid.CommentShorthand);
+            Match match = _commentRegex.Match(@string);
 			return match.Success ? string.Format(@"{{% comment %}}{0}{{% endcomment %}}", match.Groups[1].Value) : @string;
 		}
 

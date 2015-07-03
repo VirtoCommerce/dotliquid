@@ -30,6 +30,9 @@ namespace DotLiquid
 		private static Dictionary<string, Type> Tags { get; set; }
         private static readonly Dictionary<Type, Func<object, object>> SafeTypeTransformers;
 		private static readonly Dictionary<Type, Func<object, object>> ValueTypeTransformers;
+        private static Regex _whitespaceLeadingRegex = new Regex(string.Format(@"([ \t]+)?({0}|{1})-", Liquid.VariableStart, Liquid.TagStart), RegexOptions.Compiled);
+        private static Regex _whitespaceTrailingRegex = new Regex(string.Format(@"-({0}|{1})(\n|\r\n|[ \t]+)?", Liquid.VariableEnd, Liquid.TagEnd), RegexOptions.Compiled);
+        private static Regex _templateParserRegex = new Regex(Liquid.TemplateParser, RegexOptions.Compiled);
 
 		static Template()
 		{
@@ -305,12 +308,12 @@ namespace DotLiquid
 				return new List<string>();
 
 			// Trim leading whitespace.
-			source = Regex.Replace(source, string.Format(@"([ \t]+)?({0}|{1})-", Liquid.VariableStart, Liquid.TagStart), "$2");
+		    source = _whitespaceLeadingRegex.Replace(source, "$2");
 
 			// Trim trailing whitespace.
-			source = Regex.Replace(source, string.Format(@"-({0}|{1})(\n|\r\n|[ \t]+)?", Liquid.VariableEnd, Liquid.TagEnd), "$1");
+            source = _whitespaceTrailingRegex.Replace(source, "$1");
 
-			List<string> tokens = Regex.Split(source, Liquid.TemplateParser).ToList();
+            List<string> tokens = _templateParserRegex.Split(source).ToList();
 
 			// Trim any whitespace elements from the end of the array.
 			for (int i = tokens.Count - 1; i > 0; --i)

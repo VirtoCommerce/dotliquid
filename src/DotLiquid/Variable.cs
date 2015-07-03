@@ -24,7 +24,11 @@ namespace DotLiquid
 	public class Variable : IRenderable
 	{
 		//public static readonly string FilterParser = string.Format(R.Q(@"(?:{0}|(?:\s*(?!(?:{0}))(?:{1}|\S+)\s*)+)"), Liquid.FilterSeparator, Liquid.QuotedFragment);
-        public static readonly string FilterParser = string.Format(R.Q(@"(?:\s+|{0}|{1})+"), Liquid.QuotedFragment, Liquid.ArgumentSeparator);
+        public static readonly Regex FilterParserRegex = new Regex(string.Format(R.Q(@"(?:\s+|{0}|{1})+"), Liquid.QuotedFragment, Liquid.ArgumentSeparator), RegexOptions.Compiled);
+        private static readonly Regex VariableRegex = new Regex(string.Format(R.Q(@"\s*({0})(.*)"), Liquid.QuotedAssignFragment), RegexOptions.Compiled);
+        private static readonly Regex FilterRegex = new Regex(string.Format(R.Q(@"{0}\s*(.*)"), Liquid.FilterSeparator), RegexOptions.Compiled);
+        private static readonly Regex FilterNameRegex = new Regex(R.Q(@"\s*(\w+)"), RegexOptions.Compiled);
+        private static readonly Regex FilterArgsRegex = new Regex(string.Format(R.Q(@"(?:{0}|{1})\s*((?:\w+\s*\:\s*)?{2})"), Liquid.FilterArgumentSeparator, Liquid.ArgumentSeparator, Liquid.QuotedFragment), RegexOptions.Compiled);
 
 		public List<Filter> Filters { get; set; }
 		public string Name { get; set; }
@@ -38,20 +42,20 @@ namespace DotLiquid
 			Name = null;
 			Filters = new List<Filter>();
 
-			var match = Regex.Match(markup, string.Format(R.Q(@"\s*({0})(.*)"), Liquid.QuotedAssignFragment));
+			var match = VariableRegex.Match(markup);
 			if (match.Success)
 			{
 				Name = match.Groups[1].Value;
-				var filterMatch = Regex.Match(match.Groups[2].Value, string.Format(R.Q(@"{0}\s*(.*)"), Liquid.FilterSeparator));
+				var filterMatch = FilterRegex.Match(match.Groups[2].Value);
 				if (filterMatch.Success)
 				{
-					foreach (var f in R.Scan(filterMatch.Value, FilterParser))
+					foreach (var f in R.Scan(filterMatch.Value, FilterParserRegex))
 					{
-						var filterNameMatch = Regex.Match(f, R.Q(@"\s*(\w+)"));
+                        var filterNameMatch = FilterNameRegex.Match(f);
 						if (filterNameMatch.Success)
 						{
 							string filterName = filterNameMatch.Groups[1].Value;
-                            var filterArgs = R.Scan(f, string.Format(R.Q(@"(?:{0}|{1})\s*((?:\w+\s*\:\s*)?{2})"), Liquid.FilterArgumentSeparator, Liquid.ArgumentSeparator, Liquid.QuotedFragment));
+                            var filterArgs = R.Scan(f, FilterArgsRegex);
 
                             // now need to parse keyword and non keyword arguments                           
 						    var filter = ParseFilterExpressions(filterName, filterArgs.ToArray());

@@ -12,6 +12,16 @@ namespace DotLiquid.Util
 			return string.Format("(?-mix:{0})", regex);
 		}
 
+        /// <summary>
+        /// Turn on single line to include newline as a "."
+        /// </summary>
+        /// <param name="regex"></param>
+        /// <returns></returns>
+        public static string S(string regex)
+        {
+            return string.Format("(?six:{0})", regex);
+        }
+
 		public static Regex B(string format, params string[] args)
 		{
 			string pattern = string.Format(format, args);

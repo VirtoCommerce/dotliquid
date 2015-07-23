@@ -512,5 +512,12 @@ namespace DotLiquid.Tests.Tags
 			assigns = Hash.FromAnonymousObject(new { array = new[] { 1, 1, 1, 1 } });
 			Helper.AssertTemplateResult("1", "{%for item in array%}{%ifchanged%}{{item}}{% endifchanged %}{%endfor%}", assigns);
 		}
+
+        [Test]
+        public void TestMultilineTag()
+        {
+            Helper.AssertTemplateResult("0 1 2 3", "0{%\nfor i in (1..3)\n%} {{\ni\n}}{%\nendfor\n%}");
+            //Helper.AssertTemplateResult("0 1 2 3", "0{%for i in (1..3)%}{{i}}{%endfor%}");
+        }
 	}
 }

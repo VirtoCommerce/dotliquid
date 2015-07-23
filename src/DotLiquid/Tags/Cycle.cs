@@ -23,7 +23,7 @@ namespace DotLiquid.Tags
 	public class Cycle : Tag
 	{
 		private static readonly Regex SimpleSyntax = R.B(R.Q(@"^{0}+"), Liquid.QuotedFragment);
-		private static readonly Regex NamedSyntax = R.B(R.Q(@"^({0})\s*\:\s*(.*)"), Liquid.QuotedFragment);
+		private static readonly Regex NamedSyntax = R.B(R.S(@"^({0})\s*\:\s*(.*)"), Liquid.QuotedFragment);
         private static readonly Regex VariablesRegex = new Regex(string.Format(R.Q(@"\s*({0})\s*"), Liquid.QuotedFragment), RegexOptions.Compiled);
 
 		private string[] _variables;

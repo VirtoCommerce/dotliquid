@@ -11,11 +11,11 @@ namespace DotLiquid
 	{
         private static readonly Regex IsTag = new Regex(string.Format(@"^{0}", Liquid.TagStart), RegexOptions.Compiled);
         private static readonly Regex IsVariable = new Regex(string.Format(@"^{0}", Liquid.VariableStart), RegexOptions.Compiled);
-        private static readonly Regex ContentOfVariable = new Regex(string.Format(@"^{0}(.*){1}$", Liquid.VariableStart, Liquid.VariableEnd), RegexOptions.Compiled);
+        private static readonly Regex ContentOfVariable = new Regex(string.Format(R.S(@"^{0}(.*){1}$"), Liquid.VariableStart, Liquid.VariableEnd), RegexOptions.Compiled);
 
         protected static readonly Regex TagAttributesRegex = new Regex(Liquid.TagAttributes, RegexOptions.Compiled);
 
-        internal static readonly Regex FullToken = new Regex(string.Format(@"^{0}\s*(\w+)\s*(.*)?{1}$", Liquid.TagStart, Liquid.TagEnd), RegexOptions.Compiled);
+        internal static readonly Regex FullToken = new Regex(string.Format(R.S(@"^{0}\s*(\w+)\s*(.*)?{1}$"), Liquid.TagStart, Liquid.TagEnd), RegexOptions.Compiled);
 
 		protected override void Parse(List<string> tokens)
 		{

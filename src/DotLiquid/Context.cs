@@ -14,12 +14,12 @@ namespace DotLiquid
 		private readonly bool _rethrowErrors;
 		private Strainer _strainer;
 
-        private static Regex _squareBracketed = new Regex(R.Q(@"^\[(.*)\]$"), RegexOptions.Compiled);
+        private static Regex _squareBracketed = new Regex(R.S(@"^\[(.*)\]$"), RegexOptions.Compiled);
         private static Regex _floatRegex = new Regex(R.Q(@"^([+-]?\d[\d\.|\,]+)$"), RegexOptions.Compiled);
         private static Regex _rangesRegex = new Regex(R.Q(@"^\((\S+)\.\.(\S+)\)$"), RegexOptions.Compiled);
         private static Regex _integerRegex = new Regex(R.Q(@"^([+-]?\d+)$"), RegexOptions.Compiled);
-        private static Regex _doubleQuotesRegex = new Regex(R.Q(@"^""(.*)""$"), RegexOptions.Compiled);
-        private static Regex _singleQuotesRegex = new Regex(R.Q(@"^'(.*)'$"), RegexOptions.Compiled);
+        private static Regex _doubleQuotesRegex = new Regex(R.S(@"^""(.*)""$"), RegexOptions.Compiled);
+        private static Regex _singleQuotesRegex = new Regex(R.S(@"^'(.*)'$"), RegexOptions.Compiled);
         private static Regex _variableParserRegex = new Regex(Liquid.VariableParser, RegexOptions.Compiled);
 
 		public List<Hash> Environments { get; private set; }

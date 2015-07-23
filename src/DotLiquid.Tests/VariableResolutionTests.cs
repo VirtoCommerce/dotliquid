@@ -86,5 +86,13 @@ namespace DotLiquid.Tests
 			}));
 			Assert.AreEqual("Unknown variable 'test'", ex.Message);
 		}
+
+        [Test]
+        public void TestMultilineVariable()
+		{
+            //Template template = Template.Parse("{{test}}");
+			Template template = Template.Parse("{{\ntest\n}}");
+			Assert.AreEqual("worked", template.Render(Hash.FromAnonymousObject(new { test = "worked" } )));
+		}
 	}
 }

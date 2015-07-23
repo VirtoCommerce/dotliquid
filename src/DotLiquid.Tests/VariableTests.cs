@@ -170,6 +170,5 @@ namespace DotLiquid.Tests
 			    }
 			}
 		}
-
 	}
 }

@@ -30,9 +30,9 @@ namespace DotLiquid
 		private static Dictionary<string, Type> Tags { get; set; }
         private static readonly Dictionary<Type, Func<object, object>> SafeTypeTransformers;
 		private static readonly Dictionary<Type, Func<object, object>> ValueTypeTransformers;
-        private static Regex _whitespaceLeadingRegex = new Regex(string.Format(@"([ \t]+)?({0}|{1})-", Liquid.VariableStart, Liquid.TagStart), RegexOptions.Compiled);
-        private static Regex _whitespaceTrailingRegex = new Regex(string.Format(@"-({0}|{1})(\n|\r\n|[ \t]+)?", Liquid.VariableEnd, Liquid.TagEnd), RegexOptions.Compiled);
-        private static Regex _templateParserRegex = new Regex(Liquid.TemplateParser, RegexOptions.Compiled);
+        private static Regex _whitespaceLeadingRegex = null;
+        private static Regex _whitespaceTrailingRegex = null;
+        private static Regex _templateParserRegex = null;
 
 		static Template()
 		{
@@ -307,7 +307,14 @@ namespace DotLiquid
 			if (string.IsNullOrEmpty(source))
 				return new List<string>();
 
-			// Trim leading whitespace.
+		    if (_whitespaceLeadingRegex == null)
+		    {
+		        _whitespaceLeadingRegex = new Regex(string.Format(@"([ \t]+)?({0}|{1})-", Liquid.VariableStart, Liquid.TagStart), RegexOptions.Compiled);
+		        _whitespaceTrailingRegex = new Regex(string.Format(@"-({0}|{1})(\n|\r\n|[ \t]+)?", Liquid.VariableEnd, Liquid.TagEnd), RegexOptions.Compiled);
+		        _templateParserRegex = new Regex(Liquid.TemplateParser, RegexOptions.Compiled);
+		    }
+
+		    // Trim leading whitespace.
 		    source = _whitespaceLeadingRegex.Replace(source, "$2");
 
 			// Trim trailing whitespace.

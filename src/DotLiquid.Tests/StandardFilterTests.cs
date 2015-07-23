@@ -66,7 +66,7 @@ namespace DotLiquid.Tests
 		{
 			Assert.AreEqual("test", StandardFilters.StripHtml("<div>test</div>"));
 			Assert.AreEqual("test", StandardFilters.StripHtml("<div id='test'>test</div>"));
-			Assert.AreEqual(null, StandardFilters.StripHtml(null));
+			Assert.AreEqual(String.Empty, StandardFilters.StripHtml(null));
 		}
 
 		[Test]
@@ -225,7 +225,7 @@ namespace DotLiquid.Tests
 		public void TestPlus()
 		{
 			Helper.AssertTemplateResult("2", "{{ 1 | plus:1 }}");
-			Helper.AssertTemplateResult("11", "{{ '1' | plus:'1' }}");
+			Helper.AssertTemplateResult("2", "{{ '1' | plus:'1' }}");
 		}
 
 		[Test]

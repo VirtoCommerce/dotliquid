@@ -25,8 +25,8 @@ namespace DotLiquid
 	{
 		//public static readonly string FilterParser = string.Format(R.Q(@"(?:{0}|(?:\s*(?!(?:{0}))(?:{1}|\S+)\s*)+)"), Liquid.FilterSeparator, Liquid.QuotedFragment);
         public static readonly Regex FilterParserRegex = new Regex(string.Format(R.Q(@"(?:\s+|{0}|{1})+"), Liquid.QuotedFragment, Liquid.ArgumentSeparator), RegexOptions.Compiled);
-        private static readonly Regex VariableRegex = new Regex(string.Format(R.Q(@"\s*({0})(.*)"), Liquid.QuotedAssignFragment), RegexOptions.Compiled);
-        private static readonly Regex FilterRegex = new Regex(string.Format(R.Q(@"{0}\s*(.*)"), Liquid.FilterSeparator), RegexOptions.Compiled);
+        private static readonly Regex VariableRegex = new Regex(string.Format(R.S(@"\s*({0})(.*)"), Liquid.QuotedAssignFragment), RegexOptions.Compiled);
+        private static readonly Regex FilterRegex = new Regex(string.Format(R.S(@"{0}\s*(.*)"), Liquid.FilterSeparator), RegexOptions.Compiled);
         private static readonly Regex FilterNameRegex = new Regex(R.Q(@"\s*(\w+)"), RegexOptions.Compiled);
         private static readonly Regex FilterArgsRegex = new Regex(string.Format(R.Q(@"(?:{0}|{1})\s*((?:\w+\s*\:\s*)?{2})"), Liquid.FilterArgumentSeparator, Liquid.ArgumentSeparator, Liquid.QuotedFragment), RegexOptions.Compiled);
 

@@ -1,5 +1,6 @@
 using System.IO;
 using System.Net;
+using System.Threading.Tasks;
 using System.Web;
 using NUnit.Framework;
 
@@ -336,5 +337,18 @@ namespace DotLiquid.Tests
 
 			Assert.AreEqual("", output);
 		}
+
+        [Test]
+        public void TestCachedTemplateRender()
+        {
+            Template template = Template.Parse(@"{% assign foo = 'from instance assigns' %}{{foo}}");
+
+			var parallelOptions = new ParallelOptions
+			{
+				MaxDegreeOfParallelism = 10
+			};
+
+            Parallel.For(0, 10000, parallelOptions, (x) => Assert.AreEqual("from instance assigns", template.Render()));
+        }
 	}
 }

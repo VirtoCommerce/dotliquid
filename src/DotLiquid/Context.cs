@@ -38,7 +38,7 @@ namespace DotLiquid
 			Registers = registers;
 
 			Errors = new List<Exception>();
-			_rethrowErrors = rethrowErrors;
+		    _rethrowErrors = rethrowErrors;
 			SquashInstanceAssignsWithEnvironments();
 		}
 
@@ -444,7 +444,9 @@ namespace DotLiquid
 			Dictionary<string, object> tempAssigns = new Dictionary<string, object>(Template.NamingConvention.StringComparer);
 
 			Hash lastScope = Scopes.Last();
-			foreach (string k in lastScope.Keys)
+		    var allKeys = lastScope.Keys.ToArray();
+
+            foreach (string k in allKeys)
 				foreach (Hash env in Environments)
 					if (env.ContainsKey(k))
 					{

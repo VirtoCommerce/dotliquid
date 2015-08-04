@@ -26,9 +26,9 @@ namespace DotLiquid.FileSystems
 			Root = root;
 		}
 
-		public string ReadTemplateFile(Context context, string templateName)
+		public string ReadTemplateFile(Context context, string templatePath)
 		{
-			string templatePath = (string) context[templateName];
+			//string templatePath = (string) context[templateName];
 			string fullPath = FullPath(templatePath);
 			if (!File.Exists(fullPath))
 				throw new FileSystemException(Liquid.ResourceManager.GetString("LocalFileSystemTemplateNotFoundException"), templatePath);

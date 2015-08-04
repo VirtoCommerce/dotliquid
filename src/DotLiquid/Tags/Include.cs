@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -40,9 +41,7 @@ namespace DotLiquid.Tags
 
 		public override void Render(Context context, TextWriter result)
 		{
-			IFileSystem fileSystem = context.Registers["file_system"] as IFileSystem ?? Template.FileSystem;
-			string source = fileSystem.ReadTemplateFile(context, _templateName);
-			Template partial = Template.Parse(source);
+            Template partial = LoadCachedPartials(_templateName, context);
 
 			string shortenedTemplateName = _templateName.Substring(1, _templateName.Length - 2);
 			object variable = context[_variableName ?? shortenedTemplateName];
@@ -66,5 +65,30 @@ namespace DotLiquid.Tags
 				partial.Render(result, RenderParameters.FromContext(context));
 			});
 		}
+
+	    private Template LoadCachedPartials(string templateName, Context context)
+	    {
+            string templatePath = (string)context[templateName];
+            context.Registers["cached_partials"] = context.Registers["cached_partials"] ?? new Hash(0);
+            var cachedPartials = context.Registers["cached_partials"] as Hash;
+
+	        if (!String.IsNullOrEmpty(templatePath))
+	        {
+	            var cached = cachedPartials[templatePath] as Template;
+	            if (cached != null)
+	                return cached;
+	        }
+
+	        IFileSystem fileSystem = context.Registers["file_system"] as IFileSystem ?? Template.FileSystem;
+            string source = fileSystem.ReadTemplateFile(context, templatePath);
+            Template partial = Template.Parse(source);
+
+	        if (!String.IsNullOrEmpty(templatePath))
+	        {
+	            cachedPartials[templatePath] = partial;
+	            context.Registers["cached_partials"] = cachedPartials;
+	        }
+	        return partial;
+	    }
 	}
 }

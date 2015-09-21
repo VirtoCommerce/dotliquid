@@ -97,8 +97,8 @@ namespace DotLiquid.Tags
                     break;
             }
         }
-        public override void Render(Context context, TextWriter result)
-        {
+		public override void Render(Context context, TextWriter result)
+		{
             //context.Stack(() =>
             //{
                 bool executeElseBlock = true;
@@ -127,13 +127,13 @@ namespace DotLiquid.Tags
 
 			object collection = context[_collectionName];
 
-		    if (!(collection is IEnumerable))
+			if (!(collection is IEnumerable))
 		    {
                 RenderElse(context, result);
-		        return;
+				return;
 		    }
 
-		    int from = (_attributes.ContainsKey("offset"))
+			int from = (_attributes.ContainsKey("offset"))
 				? (_attributes["offset"] == "continue")
 					? Convert.ToInt32(context.Registers.Get<Hash>("for")[_name])
 					: Convert.ToInt32(context[_attributes["offset"]])
@@ -157,13 +157,13 @@ namespace DotLiquid.Tags
 
             List<object> segment = SliceCollection((IEnumerable)collection, from, to);
 
-		    if (!segment.Any())
+			if (!segment.Any())
 		    {
                 RenderElse(context, result);
-		        return;
+				return;
 		    }
 
-		    if (_reversed)
+			if (_reversed)
 				segment.Reverse();
 
 			int length = segment.Count;
@@ -171,8 +171,11 @@ namespace DotLiquid.Tags
 			// Store our progress through the collection for the continue flag
 			context.Registers.Get<Hash>("for")[_name] = from + length;
 
-			context.Stack(() => segment.EachWithIndex((item, index) =>
+		    context.Stack(() =>
 			{
+		        for (var index = 0; index < segment.Count; index++)
+		        {
+		            var item = segment[index];
 				context[_variableName] = item;
 				context["forloop"] = Hash.FromAnonymousObject(new
 				{
@@ -185,8 +188,19 @@ namespace DotLiquid.Tags
 					first = (index == 0),
 					last = (index == length - 1)
 				});
-				RenderAll(condition.Attachment, context, result);
-			}));
+		            try
+		            {
+                        RenderAll(condition.Attachment, context, result);
+		            }
+		            catch (BreakInterrupt)
+		            {
+		                break;
+		            }
+		            catch (ContinueInterrupt)
+		            {
+		            }
+		        }
+		    });
 		}
 
 	    private void RenderElse(Context context, TextWriter result)
@@ -204,7 +218,7 @@ namespace DotLiquid.Tags
             });
 	    }
 
-	    private static List<object> SliceCollectionUsingEach(IEnumerable collection, int from, int? to)
+		private static List<object> SliceCollectionUsingEach(IEnumerable collection, int from, int? to)
 		{
 			var segments = new List<object>();
 			int index = 0;
@@ -234,8 +248,8 @@ namespace DotLiquid.Tags
                 segments = SliceCollectionUsingEach(collection, from, to);
             }
 
-            return segments;
-        }
+			return segments;
+		}
 
         private void RecordForCondition(string markup, string collectionName, string variableName, Dictionary<string, string> attributes)
         {

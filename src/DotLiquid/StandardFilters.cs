@@ -664,6 +664,10 @@ namespace DotLiquid
             {
                 return s;
             }
+            else if (s is decimal)
+            {
+                return s;
+            }
             else if (s is int)
             {
                 return s;
